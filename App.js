@@ -1,12 +1,42 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
 import Constants from 'expo-constants';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App() {
 
   const [estado, setEstado] = useState('leitura')
-  const [anotacao, setAnotacao] = useState("")
+  const [anotacao, setAnotacao] = useState('')
+
+  useEffect(() => {
+    // QUando inicializar o app, quero que leia a key 'anotacao'
+
+    (async () => {
+      try{
+        const anotacaoLeitura = await AsyncStorage.getItem('anotacao')
+        setAnotacao(anotacaoLeitura)
+      }catch(error){
+
+      }
+    })();
+
+  },[])
+
+  setData = async() => {
+    try{
+      await AsyncStorage.setItem('anotacao', anotacao)
+    }catch(error){
+      console.log(error)
+    }
+
+    alert(anotacao)
+  }
+
+  function atualizarTexto(){
+    setEstado('leitura');
+    setData();
+  }
 
   if(estado == 'leitura'){
 
@@ -15,23 +45,18 @@ export default function App() {
         <View style={styles.header}>
           <Text style={styles.textHeader}>App Anotações</Text>
         </View>
-
       {
-        (anotacao != '')?
+        (anotacao == undefined || null || '')?
         <View style={{padding:20}}>
-          <Text style={styles.notation}>
-            {anotacao}
+          <Text style={{opacity:0.3}}>
+            Nenhuma anotação encontrada
           </Text>
         </View>
         :
         <View style={{padding:20}}>
-          <Text style={styles.notation, {opacity:0.3}}>
-            Nenhuma anotação encontrada
-          </Text>
+          <Text style={styles.notation}>{anotacao} </Text>
         </View>
       }
-        
-
         <TouchableOpacity style={styles.btnNotation}
           onPress={() => setEstado('atualizando')}
           >
@@ -50,6 +75,7 @@ export default function App() {
         </View>
 
         <TextInput
+          autoFocus={true}
           style={styles.textInput}
           onChangeText={(text)=>{setAnotacao(text)}}
           multiline={true}
@@ -58,9 +84,9 @@ export default function App() {
         ></TextInput>
 
         <TouchableOpacity style={styles.btnNotationSave}
-          onPress={() => setEstado('leitura')}
+          onPress={() => atualizarTexto()}
           >
-          <Text style={styles.btnNotationTexto}>Salvar</Text>
+          <Text style={styles.btnNotationTextoSave}>Salvar</Text>
         </TouchableOpacity>
 
       </View>
@@ -108,7 +134,16 @@ const styles = StyleSheet.create({
     color:'white',
     position:'relative',
     textAlign:'center',
-    fontSize:18
+    fontSize:25,
+    top:4
+  },
+
+  btnNotationTextoSave:{
+    color:'white',
+    position:'relative',
+    textAlign:'center',
+    fontSize:20,
+    top:0
   },
 
   btnNotationSave:{
@@ -116,7 +151,7 @@ const styles = StyleSheet.create({
     bottom:20,
     right:20,
     width:120,
-    padding:10,
+    padding:7,
     backgroundColor:'#069',
     alignItems:'center',
     borderRadius:20
